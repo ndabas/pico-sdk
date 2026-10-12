@@ -5,16 +5,13 @@ on:
     branches:
     - master
     - test_workflow
+    - multi-gcc-test
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   quick:
-    if: github.repository_owner == 'raspberrypi'
-    runs-on:
-    - self-hosted
-    - Linux
-    - X64
+    runs-on: ubuntu-22.04
     steps:
     - name: Clean workspace
       run: |-
@@ -25,14 +22,15 @@ jobs:
       uses: actions/checkout@v4
     - name: Checkout submodules
       run: git submodule update --init
+    - name: Install toolchains
+      run: |-
+        sudo apt-get update
+        sudo apt-get install -y libtinfo5
+        bash .github/workflows/scripts/install_test_toolchains.sh
     - name: Build
       run: python3 .github/workflows/scripts/multi_gcc_build.py quick
   exhaustive:
-    if: github.repository_owner == 'raspberrypi'
-    runs-on:
-    - self-hosted
-    - Linux
-    - X64
+    runs-on: ubuntu-22.04
     needs: quick
     steps:
     - name: Clean workspace
@@ -44,5 +42,10 @@ jobs:
       uses: actions/checkout@v4
     - name: Checkout submodules
       run: git submodule update --init
+    - name: Install toolchains
+      run: |-
+        sudo apt-get update
+        sudo apt-get install -y libtinfo5
+        bash .github/workflows/scripts/install_test_toolchains.sh
     - name: Build
       run: python3 .github/workflows/scripts/multi_gcc_build.py exhaustive
